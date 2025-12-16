@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados Diagnóstico EPJA | CENS 364</title>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4f46e5; /* Indigo */
+            --secondary: #0ea5e9; /* Sky Blue */
+            --accent: #f59e0b; /* Amber */
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --white: #ffffff;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1000px;
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            position: relative;
+            height: 650px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Barra Superior */
+        .header-bar {
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.95);
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #64748b;
+            z-index: 20; /* Asegurar que esté por encima */
+        }
+
+        .slide {
+            display: none;
+            /* CORRECCIÓN: Aumentado padding inferior a 100px para evitar solapamiento con botones */
+            padding: 30px 50px 100px 50px; 
+            height: 100%;
+            box-sizing: border-box;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto; /* Permite scroll si el contenido es largo */
+            
+            /* Scrollbar personalizado suave */
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        /* Estilo para Webkit Scrollbar */
+        .slide::-webkit-scrollbar { width: 6px; }
+        .slide::-webkit-scrollbar-track { background: transparent; }
+        .slide::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        h1 { color: var(--primary); margin-bottom: 10px; font-size: 2.8rem; letter-spacing: -1px; line-height: 1.1; }
+        h2 { color: var(--text); margin-bottom: 15px; font-size: 2rem; letter-spacing: -0.5px; position: relative; display: inline-block; }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        p { font-size: 1.1rem; line-height: 1.7; color: #475569; margin-bottom: 15px; }
+
+        .highlight { color: var(--primary); font-weight: 700; }
+
+        /* KPI Cards */
+        .kpi-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .kpi-card {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 16px;
+            flex: 1;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+        }
+
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: var(--card-shadow); }
+
+        .kpi-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .kpi-label { font-size: 0.9rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Gráficos */
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        /* Listas Modernas */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .feature-item {
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Obstacles Grid */
+        .obstacles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .obstacle-card {
+            background: #fff1f2;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #fecdd3;
+        }
+
+        .obstacle-icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+        .obstacle-title { font-weight: 700; color: #9f1239; margin-bottom: 5px; display: block; }
+
+        /* Cita */
+        .quote-box {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            position: relative;
+            margin-top: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        .quote-text { font-size: 1.3rem; font-style: italic; font-weight: 300; line-height: 1.6; }
+        .quote-author { margin-top: 15px; font-weight: 700; text-align: right; font-size: 1rem; opacity: 0.9; }
+        .quote-icon { position: absolute; top: -15px; left: 20px; font-size: 3rem; color: var(--accent); background: var(--white); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        /* Roadmap */
+        .roadmap {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            position: relative;
+        }
+        .roadmap::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+        .step {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            flex: 1;
+            padding: 0 10px;
+        }
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            background: var(--white);
+            border: 4px solid var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0 auto 15px auto;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        .step:hover .step-circle { background: var(--primary); color: var(--white); transform: scale(1.1); }
+        .step-title { font-weight: 700; color: var(--text); margin-bottom: 5px; }
+        .step-desc { font-size: 0.85rem; color: #64748b; }
+
+        /* Controles */
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            right: 50px;
+            display: flex;
+            gap: 15px;
+            z-index: 50; /* Z-index alto para asegurar que estén sobre todo */
+        }
+
+        button {
+            background: var(--text);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover { background: var(--primary); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .progress-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: #f1f5f9;
+            z-index: 40;
+        }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.4s ease; border-radius: 0 5px 5px 0; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .obstacles-grid { grid-template-columns: 1fr; }
+            .roadmap { flex-direction: column; gap: 20px; }
+            .roadmap::before { display: none; }
+            .step { display: flex; align-items: center; text-align: left; gap: 15px; }
+            .step-circle { margin: 0; }
+            h1 { font-size: 2rem; }
+            .container { height: 90vh; border-radius: 0; width: 100%; max-width: 100%; }
+            .controls { bottom: 20px; right: 20px; } /* Ajuste para móvil */
+            .slide { padding: 20px 20px 80px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-bar">
+        <span><strong>CENS 364</strong> | Informe 2024</span>
+        <span id="slideIndicator">1 / 8</span>
+    </div>
+
+    <!-- Slide 1: Portada -->
+    <div class="slide active" id="slide1">
+        <div style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">📊</div>
+            <h1>Resultados Diagnóstico Módulos EPJA</h1>
+            <p style="font-size: 1.4rem; color: var(--secondary);">Análisis de implementación, necesidades y estrategias docentes</p>
+            <div style="margin-top: 40px; display: inline-block; background: #e0e7ff; padding: 10px 20px; border-radius: 50px; color: var(--primary); font-weight: 600;">
+                🚀 Moderno & Ágil
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: Contexto -->
+    <div class="slide" id="slide2">
+        <h2>Contexto del Diagnóstico</h2>
+        <p>Objetivo: Comprender el estado actual de los módulos educativos en la modalidad EPJA para optimizar la enseñanza.</p>
+        
+        <ul class="feature-list">
+            <li class="feature-item">
+                <strong>👥 Participantes:</strong><br>Docentes de Matemática, Historia, Seguridad, Lengua y más.
+            </li>
+            <li class="feature-item">
+                <strong>🎯 Foco:</strong><br>Nivel de avance, barreras pedagógicas y necesidades tecnológicas.
+            </li>
+            <li class="feature-item">
+                <strong>💼 Meta:</strong><br>Enfoque laboral para jóvenes y adultos.
+            </li>
+        </ul>
+        <div style="text-align: center; margin-top: 40px;">
+            <img src="https://img.icons8.com/clouds/200/teacher.png" alt="Docentes" style="max-height: 180px;">
+        </div>
+    </div>
+
+    <!-- Slide 3: Implementación -->
+    <div class="slide" id="slide3">
+        <h2>Nivel de Implementación</h2>
+        <p>Panorama general sobre el avance de los módulos.</p>
+        
+        <div style="display: flex; gap: 40px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <canvas id="chartImplementacion"></canvas>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+                <div class="kpi-card" style="border-left: 5px solid var(--success);">
+                    <span class="kpi-number" style="color: var(--success);">60%</span>
+                    <span class="kpi-label">Ha Iniciado / Completo</span>
+                </div>
+                <div class="kpi-card" style="border-left: 5px solid var(--accent);">
+                    <span class="kpi-number" style="color: var(--accent);">25%</span>
+                    <span class="kpi-label">En Proceso / Parcial</span>
+                </div>
+                <div class="kpi-card" style="border-left: 5px solid var(--danger);">
+                    <span class="kpi-number" style="color: var(--danger);">15%</span>
+                    <span class="kpi-label">No Iniciado / Pendiente</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Obstáculos -->
+    <div class="slide" id="slide4">
+        <h2>🚧 Obstáculos Identificados</h2>
+        <p>Principales barreras reportadas por los docentes que frenan el avance.</p>
+        
+        <div class="obstacles-grid">
+            <div class="obstacle-card">
+                <span class="obstacle-icon">😕</span>
+                <span class="obstacle-title">Falta de Claridad</span>
+                <p style="font-size: 0.9rem;">Incertidumbre sobre el formato específico o adaptación.</p>
+            </div>
+            <div class="obstacle-card">
+                <span class="obstacle-icon">⏳</span>
+                <span class="obstacle-title">Tiempo Institucional</span>
+                <p style="font-size: 0.9rem;">Necesidad de espacios dedicados para planificar.</p>
+            </div>
+            <div class="obstacle-card">
+                <span class="obstacle-icon">🎓</span>
+                <span class="obstacle-title">Capacitación</span>
+                <p style="font-size: 0.9rem;">Solicitud de talleres específicos para diseño modular.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Conocimiento Metodológico -->
+    <div class="slide" id="slide5">
+        <h2>🧠 Conocimiento Metodológico</h2>
+        <p>Autopercepción sobre la teoría y práctica EPJA.</p>
+        
+        <div class="chart-wrapper">
+            <canvas id="chartMetodologia"></canvas>
+        </div>
+        <div style="text-align: center; margin-top: 10px;">
+            <p>Existe una base general (55%), pero la demanda de <strong>capacitación específica (30%)</strong> es alta.</p>
+        </div>
+    </div>
+
+    <!-- Slide 6: Enfoque y Cita -->
+    <div class="slide" id="slide6">
+        <h2>Enfoque Pedagógico Central</h2>
+        <p>Prioridad: <strong>Articular con la Experiencia Laboral</strong></p>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <span style="background: #ecfccb; color: #3f6212; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">✅ Relevancia inmediata</span>
+            <span style="background: #ecfccb; color: #3f6212; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;">✅ Saberes previos</span>
+        </div>
+
+        <div class="quote-box">
+            <div class="quote-icon">❝</div>
+            <p class="quote-text">
+                "El contenido prioritario debe alinearse con las necesidades, objetivos y problemas reales de los adultos, promoviendo la participación, la colaboración y la responsabilidad."
+            </p>
+            <div class="quote-author">— Arístides Rafael Franco, Docente</div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Innovación y Necesidades -->
+    <div class="slide" id="slide7">
+        <h2>💡 Innovación y Necesidades</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div>
+                <h3 style="color: var(--secondary); font-size: 1.2rem;">Tecnología Deseada</h3>
+                <ul class="feature-list" style="grid-template-columns: 1fr;">
+                    <li class="feature-item">🤖 Inteligencia Artificial</li>
+                    <li class="feature-item">🎥 Videos Interactivos</li>
+                    <li class="feature-item">📱 Apps Educativas</li>
+                </ul>
+            </div>
+            <div>
+                <h3 style="color: var(--danger); font-size: 1.2rem;">¿Qué necesitan?</h3>
+                <ul class="feature-list" style="grid-template-columns: 1fr;">
+                    <li class="feature-item">🛠️ <strong>Talleres:</strong> Diseño práctico.</li>
+                    <li class="feature-item">📂 <strong>Recursos:</strong> Plantillas y bancos de actividades.</li>
+                    <li class="feature-item">⏱️ <strong>Tiempo:</strong> Jornadas exclusivas.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Hoja de Ruta -->
+    <div class="slide" id="slide8">
+        <h2>🗺️ Hoja de Ruta Sugerida</h2>
+        <p>Pasos a seguir basados en los resultados del diagnóstico.</p>
+
+        <div class="roadmap">
+            <div class="step">
+                <div class="step-circle">1</div>
+                <div class="step-title">Estandarizar</div>
+                <div class="step-desc">Unificar criterios y formatos.</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">2</div>
+                <div class="step-title">Capacitar</div>
+                <div class="step-desc">Talleres de IA y diseño.</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-title">Producir</div>
+                <div class="step-desc">Tiempo institucional creativo.</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">4</div>
+                <div class="step-title">Evaluar</div>
+                <div class="step-desc">Medir impacto en estudiantes.</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 50px;">
+            <button onclick="location.reload()" style="background: var(--accent); margin: 0 auto;">🔄 Reiniciar Presentación</button>
+        </div>
+    </div>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar" style="width: 12.5%;"></div>
+    </div>
+
+    <div class="controls">
+        <button id="btnPrev" onclick="changeSlide(-1)" disabled>⬅ Anterior</button>
+        <button id="btnNext" onclick="changeSlide(1)">Siguiente ➡</button>
+    </div>
+</div>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 8;
+
+    function changeSlide(direction) {
+        document.getElementById(`slide${currentSlide}`).classList.remove('active');
+        currentSlide += direction;
+        document.getElementById(`slide${currentSlide}`).classList.add('active');
+
+        // Actualizar UI
+        const progress = (currentSlide / totalSlides) * 100;
+        document.getElementById('progressBar').style.width = `${progress}%`;
+        document.getElementById('slideIndicator').innerText = `${currentSlide} / ${totalSlides}`;
+
+        // Botones
+        document.getElementById('btnPrev').disabled = currentSlide === 1;
+        document.getElementById('btnNext').style.display = currentSlide === totalSlides ? 'none' : 'flex';
+        
+        // Disparar redibujado de gráficos si es necesario
+        if(currentSlide === 3) chartImpl.update();
+        if(currentSlide === 5) chartMet.update();
+    }
+
+    // Configuración global de fuentes ChartJS
+    Chart.defaults.font.family = "'Poppins', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    // Gráfico 1: Implementación (Slide 3) - Datos PDF Page 3
+    const ctxImpl = document.getElementById('chartImplementacion').getContext('2d');
+    const chartImpl = new Chart(ctxImpl, {
+        type: 'doughnut',
+        data: {
+            labels: ['Ha Iniciado / Completo', 'En Proceso / Parcial', 'No Iniciado'],
+            datasets: [{
+                data: [60, 25, 15],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // Gráfico 2: Metodología (Slide 5) - Datos PDF Page 5
+    const ctxMet = document.getElementById('chartMetodologia').getContext('2d');
+    const chartMet = new Chart(ctxMet, {
+        type: 'bar',
+        data: {
+            labels: ['Tengo idea general', 'Necesito capacitación', 'Conozco la teoría'],
+            datasets: [{
+                label: 'Porcentaje de Docentes',
+                data: [55, 30, 15],
+                backgroundColor: ['#6366f1', '#f43f5e', '#10b981'],
+                borderRadius: 8,
+                barThickness: 50
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Barra horizontal para mejor lectura de etiquetas
+            scales: {
+                x: { beginAtZero: true, max: 100 }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+</script>
+</body>
+</html>
